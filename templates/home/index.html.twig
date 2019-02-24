@@ -1,0 +1,176 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Créer un compte{% endblock %}
+
+{% block body %}
+    <div class="center-align" id="menuDiv">
+            <input class="waves-effect waves-light btn-small blue menuNav" id="btnRegister" type="button" value="Inscription">
+            <input class="waves-effect waves-light btn-small blue menuNav" id="btnConn" type="button" value="Connexion">
+    </div>
+
+    <div id="divAccueil" class="center-align" style="display: block"><h1><strong>Bienvenue !</strong></h1></div>
+    <div id="registerDiv" style="display: none">
+        <h1 class="text-darken-2">Bienvenue ! Rejoignez-nous</h1>
+        <form id="reg-form" action="" method="post">
+            <p id="errIdentif" class="red-text" style="display: none"></p><br>
+            <input type="text" placeholder="Identifiant" id="id" name="id"><br>
+            <p id="errMDP" class="red-text" style="display: none"></p><br>
+            <input type="text" placeholder="Mot de passe" id="mdp" name="mdp"><br>
+            <p id="errMDPre" class="red-text" style="display: none"></p><br>
+            <input type="text" placeholder="Confirmer le mot de passe" id="mdp2" name="mdp2"><br>
+            <input id="subRegister" class="waves-effect waves-light btn-small" type="button" value="S'inscrire">
+        </form>
+    </div>
+
+    <div id="loginDiv" style="display: none">
+        <h1 class="text-darken-2">Vous nous avez manqué !</h1>
+        <form action="" method="post">
+            <p id="errIDco" class="red-text" style="display: none"></p><br>
+            <input id="idCo" type="text" placeholder="Identifiant" name="id"><br>
+            <p id="errMDPco" class="red-text" style="display: none"></p><br>
+            <input id="mdpCo" type="text" placeholder="Mot de passe" name="mdp"><br>
+            <input id="subCo" class="waves-effect waves-light btn-small" type="button" value="Connexion">
+        </form>
+    </div>
+
+    <div id="blockPhoto" style="display: none">
+
+    </div>
+{% endblock %}
+{% block javascripts %}
+    <script>
+        var user="";
+        var photos;
+        if (user.valueOf()!==""){
+            document.getElementById("btnConn").style.display="none";
+        }
+        var token;
+        $.get("{{ path('Home.getTocken') }}",(function (tok) {
+            token=tok.tok;
+        }));
+        $("#subRegister").click(function(){
+            document.getElementById("errIdentif").style.display="none";
+            document.getElementById("errMDP").style.display="none";
+            document.getElementById("errMDPre").style.display="none";
+            var id=$('#id').val();
+            var mdp=$('#mdp').val();
+            var mdp2=$('#mdp2').val();
+            console.log(id,mdp);
+
+            if (id==""){
+                document.getElementById("errIdentif").style.display="block";
+                document.getElementById("errIdentif").innerHTML="<strong>Veuillez saisir un identifiant valide.</strong>";
+                return;
+            }
+            else if(id.length<3){
+                document.getElementById("errIdentif").style.display="block";
+                document.getElementById("errIdentif").innerHTML="<strong>Veuillez saisir un identifiant de 3 caractères ou plus.</strong>";
+                return;
+            }
+            if (mdp==""){
+                document.getElementById("errMDP").style.display="block";
+                document.getElementById("errMDP").innerHTML="<strong>Veuillez saisir un mot de passe valide.</strong>";
+                return;
+            }
+            else if(mdp.length<3){
+                document.getElementById("errMDP").style.display="block";
+                document.getElementById("errMDP").innerHTML="<strong>Veuillez saisir un mot de passe de 3 caractères ou plus.</strong>";
+                return;
+            }
+            if (mdp!=mdp2){
+                document.getElementById("errMDPre").style.display="block";
+                document.getElementById("errMDPre").innerHTML="<strong>Veuillez saisir le même mot de passe que ci-dessus.</strong>";
+                return;
+            }
+
+            $.post("{{ path('Home.register') }}",{id:id, mdp:mdp}).done(function(data) {
+                document.getElementById("errIdentif").style.display="block";
+                document.getElementById("errIdentif").innerHTML="<strong>Votre compte a bien été créé.</strong>";
+                function retour() {
+                    document.getElementById("registerDiv").style.display="none";
+                    document.getElementById("divAccueil").style.display="block";
+                    document.getElementById("loginDiv").style.display="none";
+                }
+                setTimeout(retour, 2000);
+            });
+        });
+
+        $('#subCo').click(function () {
+            var id=$('#idCo').val();
+            var mdp=$('#mdpCo').val();
+            document.getElementById("errMDPco").style.display="none";
+            document.getElementById("errIDco").style.display="none";
+            $.post("{{ path('Home.login') }}",{id:id, mdp:mdp, tok:token}).done(function(data) {
+                if (data.err!=null){
+                    switch(data.err){
+                        case "mdp":
+                            document.getElementById("errMDPco").style.display="block";
+                            document.getElementById("errMDPco").innerHTML="<strong>Mot de passe incorrect.</strong>";
+                            break;
+                        case "id":
+                            document.getElementById("errIDco").style.display="block";
+                            document.getElementById("errIDco").innerHTML="<strong>Identifiant incorrect.</strong>";
+                            break;
+                        case "token":
+                            document.getElementById("errIDco").style.display="block";
+                            document.getElementById("errIDco").innerHTML="<strong>Token incorrect.</strong>";
+                            break;
+                    }
+                }
+                else{
+                    user=data.user.id;
+                    $('#btnConn').val('Déconnexion');
+                    document.getElementById("registerDiv").style.display="none";
+                    document.getElementById("divAccueil").style.display="none";
+                    document.getElementById("loginDiv").style.display="none";
+                    document.getElementById("blockPhoto").style.display="block";
+
+                    $.getJSON("http://api.flickr.com/services/feeds/photos_public.gne?tags=besancon&tagmode=any&format=json&jsoncallback=?", function (data) {
+                        $.each(data.items, function (key, val) {
+                            $("#blockPhoto").append(
+                                '<div class="row">' +
+                                '<div class="col s12 m6">' +
+                                '<div class="card" style="width: 18rem;"> ' +
+                                '<img src="'+val.media.m+'" class="card-image" alt="..."> ' +
+                                '<div class="card-body"> ' +
+                                '<h5 class="card-title">'+val.title+'</h5>' +
+                                '</div> ' +
+                                '</div>' +
+                                '</div>' +
+                                '</div>'
+                            )
+                        })
+                    });
+                }
+            });
+        });
+
+
+        $('#btnRegister').click(function () {
+            document.getElementById("registerDiv").style.display="block";
+            document.getElementById("divAccueil").style.display="none";
+            document.getElementById("loginDiv").style.display="none";
+            document.getElementById("blockPhoto").style.display="none";
+        });
+
+        $('#btnConn').click(function () {
+            if($('#btnConn').val()=="Connexion"){
+                document.getElementById("registerDiv").style.display="none";
+                document.getElementById("divAccueil").style.display="none";
+                document.getElementById("loginDiv").style.display="block";
+                document.getElementById("blockPhoto").style.display="none";
+            }
+            else if($('#btnConn').val()=="Déconnexion"){
+                $('#btnConn').val('Connexion');
+                document.getElementById("registerDiv").style.display="none";
+                document.getElementById("divAccueil").style.display="block";
+                document.getElementById("loginDiv").style.display="none";
+                document.getElementById("blockPhoto").style.display="none";
+            }
+        });
+
+        $('#btnDeconn').click(function () {
+
+        });
+    </script>
+{% endblock %}

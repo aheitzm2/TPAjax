@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>{% block title %}Bienvenue{% endblock %}</title>
+        <script src="{{ asset('jquery-3.3.1.min.js') }}"></script>
+        <link rel="stylesheet" href="{{ asset('materialize/css/materialize.min.css') }}">
+        <script src="{{ asset('materialize/js/materialize.min.js') }}"></script>
+        {% block stylesheets %}
+        {% endblock %}
+    </head>
+    <body>
+    <div class="container">
+        {% block body %}{% endblock %}
+    </div>
+        {% block javascripts %}{% endblock %}
+    </body>
+</html>
